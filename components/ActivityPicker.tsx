@@ -1,85 +1,67 @@
-import React, { useState } from 'react';
+'use client';
 
-interface Activity {
-  id: number;
-  title: string;
-}
+import { useState } from 'react';
+import type { Activity } from '../types/activity';
 
-interface ActivityPickerProps {
+type Props = {
   activities: Activity[];
-  userEmail: string;  // Додаємо userEmail
-}
+  lang: 'uk' | 'en';
+  userId: string;
+};
 
-const ActivityPicker: React.FC<ActivityPickerProps> = ({ activities, userEmail }) => {
-  const [selectedDay1, setSelectedDay1] = useState<number[]>([]);
-  const [selectedDay2, setSelectedDay2] = useState<number[]>([]);
-  const [selectedDay3, setSelectedDay3] = useState<number[]>([]);
+const ActivityPicker = ({ activities, lang, userId }: Props) => {
+  const [selectedActivities, setSelectedActivities] = useState<number[]>([]);
 
-  const handleCheckboxChange = (day: number, activityId: number, isChecked: boolean) => {
-    const setSelectedDay = day === 1 ? setSelectedDay1 : day === 2 ? setSelectedDay2 : setSelectedDay3;
-    if (isChecked) {
-      setSelectedDay((prevSelected) => [...prevSelected, activityId]);
+  const handleSelect = (activityId: number) => {
+    if (selectedActivities.includes(activityId)) {
+      setSelectedActivities(selectedActivities.filter(id => id !== activityId));
     } else {
-      setSelectedDay((prevSelected) => prevSelected.filter((id) => id !== activityId));
+      setSelectedActivities([...selectedActivities, activityId]);
     }
   };
 
-  const handleSave = async (day: number) => {
-    let selectedActivities: number[] = [];
-    if (day === 1) selectedActivities = selectedDay1;
-    if (day === 2) selectedActivities = selectedDay2;
-    if (day === 3) selectedActivities = selectedDay3;
-    
-    // Ensure that there are activities selected
-    if (selectedActivities.length === 0) {
-      alert('Будь ласка, виберіть хоча б одну активність');
+  const handleSave = async () => {
+    if (!selectedActivities.length) {
+      alert(lang === 'uk' ? 'Будь ласка, виберіть хоч одну активність' : 'Please select at least one activity');
       return;
     }
 
-    // Отправка на сервер
     try {
-      const response = await fetch('/api/activities/save', {
+      const res = await fetch('/api/activities/save', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: userEmail, // Використовуємо email користувача
-          day,
-          activities: selectedActivities,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: userId, activities: selectedActivities }),
       });
 
-      const data = await response.json();
-      if (data.message) {
-        alert(data.message);
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Сталася помилка під час збереження даних');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      alert(lang === 'uk' ? 'Збережено успішно' : 'Saved successfully');
+    } catch (err) {
+      alert(lang === 'uk' ? 'Помилка збереження' : 'Save failed');
     }
   };
 
   return (
     <div>
-      {[1, 2, 3].map((day) => (
+      {[1, 2, 3].map(day => (
         <div key={day}>
-          <h3>День {day}</h3>
-          {activities.map((activity) => (
-            <div key={activity.id}>
-              <input
-                type="checkbox"
-                id={`activity-${activity.id}`}
-                onChange={(e) =>
-                  handleCheckboxChange(day, activity.id, e.target.checked)
-                }
-              />
-              <label htmlFor={`activity-${activity.id}`}>{activity.title}</label>
-            </div>
-          ))}
-          <button onClick={() => handleSave(day)}>Зберегти вибір</button>
+          <h3>{lang === 'uk' ? `День ${day}` : `Day ${day}`}</h3>
+          {activities
+            .filter(act => act.day === day)
+            .map(act => (
+              <label key={act.id}>
+                <input
+                  type="checkbox"
+                  checked={selectedActivities.includes(act.id)}
+                  onChange={() => handleSelect(act.id)}
+                />
+                {lang === 'uk' ? act.title_uk : act.title_en}
+              </label>
+            ))}
+          <br />
         </div>
       ))}
+      <button onClick={handleSave}>{lang === 'uk' ? 'Зберегти вибір' : 'Save selection'}</button>
     </div>
   );
 };

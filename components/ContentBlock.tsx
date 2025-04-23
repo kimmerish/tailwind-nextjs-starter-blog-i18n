@@ -1,15 +1,23 @@
-import React from 'react';
+'use client';
 
-interface Props {
+import React from 'react';
+import ReactMarkdown from 'react-markdown';
+
+type Props = {
   title: string;
   text: string;
-}
+  backgroundColor: string;
+};
 
-export default function ContentBlock({ title, text }: Props) {
+const ContentBlock: React.FC<Props> = ({ title, text, backgroundColor }) => {
   return (
-    <div className="max-w-2xl text-center p-6 bg-white rounded-2xl shadow-md">
-      <h2 className="text-2xl font-bold mb-4">{title}</h2>
-      <p className="text-lg">{text}</p>
-    </div>
+    <section className={backgroundColor}>
+      <div style={{ maxWidth: '960px', margin: '0 auto', padding: '40px 20px' }}>
+        <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>{title}</h2>
+        <ReactMarkdown>{text}</ReactMarkdown>
+      </div>
+    </section>
   );
-}
+};
+
+export default ContentBlock;

@@ -8,17 +8,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: 'Метод не дозволено' });
   }
 
-  const { email, day, activities } = req.body;
+  // Очікувані поля на бекенді
+const { email, activities } = req.body;
 
-  if (!email || !day || !Array.isArray(activities)) {
-    return res.status(400).json({ message: 'Невірні дані' });
-  }
+if (!email || !Array.isArray(activities)) {
+  return res.status(400).json({ message: 'Invalid input' });
+}
+
 
   let column = '';
-  if (day === 1) column = 'day1_activities';
-  else if (day === 2) column = 'day2_activities';
-  else if (day === 3) column = 'day3_activities';
-  else return res.status(400).json({ message: 'Невірний день' });
+
 
   try {
     const ids = activities.join(',');  // Перетворюємо масив активностей в рядок для зберігання в БД
